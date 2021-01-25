@@ -5,23 +5,45 @@
  */
 package servlets;
 
+import entity.Book;
+import entity.Reader;
+import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
+import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import session.BookFacade;
+import session.HistoryFacade;
+import session.ReaderFacade;
+import session.UserFacade;
+import session.UserRolesFacade;
 
 /**
  *
- * @author pupil
+ * @author jvm
  */
-@WebServlet(name = "MyServlet", urlPatterns = {
-    "/addBook",
-    "/createBook"})
-public class MyServlet extends HttpServlet {
+@WebServlet(name = "ManagerServlet", urlPatterns = {
+     "/addBook",
+    "/createBook",
+    
 
+})
+public class ManagerServlet extends HttpServlet {
+    @EJB
+    private BookFacade bookFacade;
+    @EJB
+    private ReaderFacade readerFacade;
+    @EJB
+    private HistoryFacade historyFacade;
+    @EJB
+    private UserFacade userFacade;
+    @EJB private UserRolesFacade userRolesFacade;
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -34,10 +56,28 @@ public class MyServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        request.setAttribute("info", "Привет из MyServlet");
         request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession(false);
+        if(session == null){
+            request.setAttribute("info", "У вас нет права использовать этот ресурс. Войдите!");
+            request.getRequestDispatcher("/WEB-INF/loginForm.jsp").forward(request, response);
+            return;
+        }
+        User user = (User) session.getAttribute("user");
+        if(user == null){
+            request.setAttribute("info", "У вас нет права использовать этот ресурс. Войдите!");
+            request.getRequestDispatcher("/WEB-INF/loginForm.jsp").forward(request, response);
+            return;
+        }
+        boolean isRole = userRolesFacade.isRole("MANAGER",user);
+        if(!isRole){
+            request.setAttribute("info", "У вас нет права использовать этот ресурс. Войдите с соответствующими правами!");
+            request.getRequestDispatcher("/WEB-INF/loginForm.jsp").forward(request, response);
+            return;
+        }
+        
         String path = request.getServletPath();
-        switch(path) {
+        switch (path) {
             case "/addBook":
                 request.getRequestDispatcher("/WEB-INF/addBookForm.jsp").forward(request, response);
                 break;
@@ -45,14 +85,21 @@ public class MyServlet extends HttpServlet {
                 String name = request.getParameter("name");
                 String author = request.getParameter("author");
                 String publishedYear = request.getParameter("publishedYear");
-                request.setAttribute("info",
-                        "Добавлена книга " +name+
-                        ", автор: " +author +
-                        ", год издания" + publishedYear);
-                request.getRequestDispatcher("index.jsp").forward(request,response);
+                String isbn = request.getParameter("isbn");
+                request.setAttribute("info", 
+                        "Добавлена книга "+name+
+                        ", автор: " + author +
+                        ", год издания: "+ publishedYear        
+                );
+                Book book = new Book(name, author, Integer.parseInt(publishedYear), isbn);
+                bookFacade.create(book);
+                request.getRequestDispatcher("/index.jsp").forward(request, response);
                 break;
+            
+            
+            
         }
-                }
+    }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

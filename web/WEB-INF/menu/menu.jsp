@@ -1,6 +1,6 @@
 <%-- 
-    Document   : page2
-    Created on : Nov 25, 2020, 10:27:15 AM
+    Document   : menu
+    Created on : Jan 25, 2021, 2:35:11 PM
     Author     : pupil
 --%>
 
@@ -12,9 +12,6 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <h1>Hello for  page2!</h1>
-        <p>${info}</p>
-        <a href="index.jsp">index</a>
-        <a href="page1.jsp">page1</a>
+        <h1>Hello World!</h1>
     </body>
 </html>
